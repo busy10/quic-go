@@ -124,12 +124,13 @@ func newSentPacketHandler(
 	tracer *logging.ConnectionTracer,
 	logger utils.Logger,
 ) *sentPacketHandler {
-	congestion := congestion.NewCubicSender(
-		congestion.DefaultClock{},
+	cc := congestion.NewBBRSender(congestion.DefaultClock{},
 		rttStats,
-		initialMaxDatagramSize,
-		true, // use Reno
-		tracer,
+		protocol.InitialCongestionWindow,
+		protocol.DefaultBBRMaxCongestionWindow,
+		func() protocol.ByteCount {
+			return handler.bytesInFlight
+		},
 	)
 
 	h := &sentPacketHandler{
